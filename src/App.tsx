@@ -23,6 +23,7 @@ import {
   type SessionPausedEvent,
   type SessionResumedEvent,
   type SessionSettings,
+  type SessionSegment,
 } from './domain/session'
 import {
   loadSavedSessions,
@@ -84,6 +85,70 @@ const getSegmentLabel = (kind: 'work' | 'kivil' | 'pause') => {
   }
 
   return 'Work'
+}
+
+const getSegmentColor = (segment: SessionSegment, settings: SessionSettings) => {
+  if (segment.kind === 'kivil') {
+    return settings.kivilColor
+  }
+
+  if (segment.kind === 'work') {
+    return settings.workColor
+  }
+
+  return '#c9c0b2'
+}
+
+const getSegmentTooltip = (segment: SessionSegment) => {
+  const details = [
+    `${getSegmentLabel(segment.kind)}: ${formatDuration(segment.durationMs)}`,
+    `${formatTime(segment.startAt)} - ${formatTime(segment.endAt)}`,
+  ]
+
+  if (segment.note) {
+    details.push(segment.note)
+  }
+
+  return details.join('\n')
+}
+
+function SegmentTimeline({
+  compact = false,
+  segments,
+  settings,
+}: {
+  compact?: boolean
+  segments: SessionSegment[]
+  settings: SessionSettings
+}) {
+  const totalDuration = segments.reduce((total, segment) => total + segment.durationMs, 0)
+
+  if (segments.length === 0 || totalDuration === 0) {
+    return <div className={`timeline-empty ${compact ? 'is-compact' : ''}`} />
+  }
+
+  return (
+    <div
+      aria-label="Session timeline"
+      className={`session-timeline ${compact ? 'is-compact' : ''}`}
+      role="list"
+    >
+      {segments.map((segment) => (
+        <div
+          aria-label={getSegmentTooltip(segment)}
+          className={`timeline-segment timeline-${segment.kind}`}
+          key={segment.id}
+          role="listitem"
+          style={{
+            background: getSegmentColor(segment, settings),
+            flexGrow: segment.durationMs,
+          }}
+          tabIndex={0}
+          title={getSegmentTooltip(segment)}
+        />
+      ))}
+    </div>
+  )
 }
 
 function App() {
@@ -239,7 +304,7 @@ function App() {
     const nextEvents = [
       ...events,
       withId({
-      type: 'session_ended',
+        type: 'session_ended',
         at: endedAt,
       } satisfies SessionEventInput & Omit<SessionEndedEvent, 'id'>),
     ]
@@ -468,29 +533,36 @@ function App() {
               <p className="muted-text">No saved sessions</p>
             ) : (
               <div className="history-list">
-                {savedSessions.map((session) => (
-                  <article
-                    className={`history-row ${openedSessionId === session.id ? 'is-open' : ''}`}
-                    key={session.id}
-                  >
-                    <input
-                      aria-label="Saved session name"
-                      value={session.name}
-                      onChange={(event) => renameSavedSession(session.id, event.target.value)}
-                    />
-                    <span>{formatDateTime(session.createdAt)}</span>
-                    <div className="history-actions">
-                      <button type="button" onClick={() => openSavedSession(session)}>
-                        <Play size={16} />
-                        Open
-                      </button>
-                      <button type="button" onClick={() => deleteSavedSession(session.id)}>
-                        <Trash2 size={16} />
-                        Delete
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                {savedSessions.map((session) => {
+                  const savedSnapshot = deriveSessionSnapshot(session.events, session.updatedAt)
+
+                  return (
+                    <article
+                      className={`history-row ${openedSessionId === session.id ? 'is-open' : ''}`}
+                      key={session.id}
+                    >
+                      <input
+                        aria-label="Saved session name"
+                        value={session.name}
+                        onChange={(event) => renameSavedSession(session.id, event.target.value)}
+                      />
+                      <span>
+                        {formatDateTime(session.createdAt)} · {formatDuration(savedSnapshot.elapsedMs)}
+                      </span>
+                      <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
+                      <div className="history-actions">
+                        <button type="button" onClick={() => openSavedSession(session)}>
+                          <Play size={16} />
+                          Open
+                        </button>
+                        <button type="button" onClick={() => deleteSavedSession(session.id)}>
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             )}
           </aside>
@@ -544,41 +616,8 @@ function App() {
               </div>
             </div>
 
-            <div className="segment-list">
-              {snapshot.segments.map((segment) => (
-                <article
-                  className={`segment-card segment-${segment.kind}`}
-                  key={segment.id}
-                  style={{
-                    borderColor:
-                      segment.kind === 'kivil'
-                        ? settings.kivilColor
-                        : segment.kind === 'work'
-                          ? settings.workColor
-                          : undefined,
-                  }}
-                >
-                  <div
-                    className="segment-marker"
-                    style={{
-                      background:
-                        segment.kind === 'kivil'
-                          ? settings.kivilColor
-                          : segment.kind === 'work'
-                            ? settings.workColor
-                            : undefined,
-                    }}
-                  />
-                  <div>
-                    <h3>{getSegmentLabel(segment.kind)}</h3>
-                    <p>
-                      {formatTime(segment.startAt)} - {formatTime(segment.endAt)}
-                    </p>
-                    {segment.note ? <p className="segment-note">{segment.note}</p> : null}
-                  </div>
-                  <strong>{formatDuration(segment.durationMs)}</strong>
-                </article>
-              ))}
+            <div className="timeline-shell">
+              <SegmentTimeline segments={snapshot.segments} settings={settings} />
             </div>
           </section>
         </div>

@@ -16,7 +16,7 @@ dist-ssr
 test-results
 playwright-report
 .vite-dev*.log
-kivil-smoke.png
+kivil-*.png
 
 # Editor directories and files
 .vscode/*
