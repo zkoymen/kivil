@@ -167,7 +167,7 @@ const createSegment = (
   const durationMs = endAt - startAt
 
   return {
-    id: `${kind}-${sourceEventId ?? 'session'}-${startAt}-${endAt}`,
+    id: `${kind}-${sourceEventId ?? 'session'}-${startAt}`,
     kind,
     startAt,
     endAt,
