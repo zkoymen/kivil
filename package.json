@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "desktop:build": "npm run build && npx @neutralinojs/neu build --release",
+    "desktop:run": "npm run build && npx @neutralinojs/neu run",
     "lint": "eslint .",
     "test": "vitest run src",
     "test:smoke": "playwright test",

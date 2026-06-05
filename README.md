@@ -24,6 +24,8 @@ npm test
 npm run lint
 npm run build
 npm run test:smoke
+npm run desktop:run
+npm run desktop:build
 ```
 
 ## Project Structure
@@ -39,9 +41,11 @@ npm run test:smoke
 
 ## Desktop Shell
 
-The next technical step is adding a Tauri 2 desktop shell after the Windows prerequisites are installed:
+The current desktop shell target is Neutralinojs because it avoids the Rust and Microsoft C++ Build Tools requirement that Tauri needs on Windows.
 
-- Microsoft C++ Build Tools with the Desktop development with C++ workload.
-- Rust through `rustup`.
-- Microsoft Edge WebView2 Runtime if it is not already present.
+```bash
+npm run desktop:run
+npm run desktop:build
+```
 
+The Windows Neutralino runtime binary is stored in `bin/neutralino-win_x64.exe`.
