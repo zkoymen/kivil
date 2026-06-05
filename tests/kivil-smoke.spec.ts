@@ -6,7 +6,7 @@ test('runs the core Kıvıl session flow', async ({ page }) => {
   await page.reload()
 
   await page.getByLabel('Session name').fill('Smoke session')
-  await page.getByRole('button', { name: 'Start Session' }).click()
+  await page.getByLabel('Start session').getByRole('button', { name: 'Start Session' }).click()
 
   await expect(page.getByText('Elapsed')).toBeVisible()
   await page.getByLabel('Kıvıl duration').fill('1')
@@ -18,7 +18,7 @@ test('runs the core Kıvıl session flow', async ({ page }) => {
   await page.getByRole('button', { name: 'Complete' }).click()
   await page.getByRole('button', { name: 'End Session' }).click()
 
-  await expect(page.getByText('Session Summary')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Session complete.' })).toBeVisible()
   await expect(page.getByText('Saved Sessions')).toBeVisible()
   await expect(page.getByLabel('Saved session name')).toHaveValue('Smoke session')
 
@@ -26,5 +26,5 @@ test('runs the core Kıvıl session flow', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Renamed smoke session' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Delete' }).click()
-  await expect(page.getByRole('heading', { name: 'Start a session' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your craft deserves undivided attention.' })).toBeVisible()
 })
