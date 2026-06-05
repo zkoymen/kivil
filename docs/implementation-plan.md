@@ -4,6 +4,8 @@
 
 Use Tauri 2 with a React and TypeScript frontend.
 
+Important constraint update: Tauri remains technically strong for a polished desktop app, but its Windows development prerequisites are not lightweight. The app binary can be small, while the local development toolchain can require Rust plus Microsoft C++ Build Tools. Do not move to Tauri until the user explicitly accepts that disk and setup cost.
+
 Frontend:
 
 - React
@@ -28,6 +30,8 @@ Local data:
 Kıvıl needs to feel modern and smooth without becoming heavy. A web frontend gives fast UI iteration and strong styling control. Tauri gives a smaller desktop shell than a browser-bundling approach and supports app icons, custom windows, native menus, and packaging.
 
 Electron remains a practical option if maximum ecosystem maturity becomes more important than app size. Flutter is viable for a fully custom native-rendered UI, but it would slow the first prototype unless the project intentionally moves into a Dart and Flutter workflow.
+
+If local disk footprint becomes the primary constraint, evaluate Neutralinojs before Tauri. It can use the existing OS webview and avoids the Rust/MSVC toolchain, but it has a smaller ecosystem and fewer native integrations.
 
 ## MVP Scope
 
@@ -97,4 +101,3 @@ The final summary should be chronological but substantial: block rows, colored s
 5. Add color and duration settings.
 6. Add local persistence.
 7. Add custom app icon and polished desktop window treatment.
-
