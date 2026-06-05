@@ -30,5 +30,5 @@ test('runs the core Kıvıl session flow', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Renamed smoke session' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Delete' }).click()
-  await expect(page.getByRole('heading', { name: 'Your craft deserves undivided attention.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Stay with the work.' })).toBeVisible()
 })
