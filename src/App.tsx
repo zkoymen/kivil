@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { Check, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
 import './App.css'
 import { SegmentTimeline } from './components/SegmentTimeline'
@@ -60,6 +60,7 @@ function App() {
   const [draftNote, setDraftNote] = useState('')
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null)
   const [activePanel, setActivePanel] = useState<SidebarPanel>(null)
+  const [sidebarWidth, setSidebarWidth] = useState(228)
 
   const snapshot = useMemo(() => deriveSessionSnapshot(events, now), [events, now])
   const hasSession = snapshot.status !== 'empty'
@@ -237,6 +238,7 @@ function App() {
     setDraftNote('')
     setOpenedSessionId(session.id)
     setNow(Date.now())
+    setActivePanel(null)
   }
 
   const renameSavedSession = (sessionId: string, name: string) => {
@@ -299,6 +301,26 @@ function App() {
 
   const closePanel = () => setActivePanel(null)
 
+  const startSidebarResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+
+    const startX = event.clientX
+    const startWidth = sidebarWidth
+
+    const resize = (moveEvent: PointerEvent) => {
+      const nextWidth = startWidth + moveEvent.clientX - startX
+      setSidebarWidth(Math.min(Math.max(nextWidth, 188), 292))
+    }
+
+    const stopResize = () => {
+      window.removeEventListener('pointermove', resize)
+      window.removeEventListener('pointerup', stopResize)
+    }
+
+    window.addEventListener('pointermove', resize)
+    window.addEventListener('pointerup', stopResize)
+  }
+
   const renderPanel = () => {
     if (!activePanel) {
       return null
@@ -341,6 +363,20 @@ function App() {
                       onChange={(event) => renameSavedSession(session.id, event.target.value)}
                     />
                     <span>{formatDateTime(session.createdAt)}</span>
+                    <div className="panel-session-metrics" aria-label="Saved session metrics">
+                      <span>
+                        <strong>{formatShortDuration(savedSnapshot.elapsedMs)}</strong>
+                        Focused
+                      </span>
+                      <span>
+                        <strong>{savedSnapshot.kivilCount}</strong>
+                        Kıvıl
+                      </span>
+                      <span>
+                        <strong>{formatShortDuration(savedSnapshot.pauseMs)}</strong>
+                        Paused
+                      </span>
+                    </div>
                     <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
                     <div className="history-actions">
                       <button type="button" onClick={() => openSavedSession(session)}>
@@ -428,11 +464,19 @@ function App() {
   }
 
   return (
-    <main className="kivil-app">
+    <main
+      className="kivil-app"
+      style={
+        {
+          '--sidebar-width': `${sidebarWidth}px`,
+        } as CSSProperties
+      }
+    >
       <Sidebar
         activePanel={activePanel}
         hasSession={hasSession}
         onNewSession={hasSession ? resetPrototype : startSession}
+        onResizeStart={startSidebarResize}
         onTogglePanel={togglePanel}
       />
 

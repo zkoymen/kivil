@@ -1,4 +1,5 @@
 import { BarChart3, Clock3, History, Play, Settings2 } from 'lucide-react'
+import type { PointerEventHandler } from 'react'
 import brandLogo from '../../assets/brand/kivil_logo_transparent.png'
 
 export type SidebarPanel = 'history' | 'summaries' | 'settings' | null
@@ -7,11 +8,13 @@ export function Sidebar({
   activePanel,
   hasSession,
   onNewSession,
+  onResizeStart,
   onTogglePanel,
 }: {
   activePanel: SidebarPanel
   hasSession: boolean
   onNewSession: () => void
+  onResizeStart: PointerEventHandler<HTMLButtonElement>
   onTogglePanel: (panel: Exclude<SidebarPanel, null>) => void
 }) {
   return (
@@ -56,6 +59,12 @@ export function Sidebar({
         <Play size={18} />
         {hasSession ? 'New Session' : 'Start Session'}
       </button>
+      <button
+        aria-label="Resize sidebar"
+        className="sidebar-resize-handle"
+        onPointerDown={onResizeStart}
+        type="button"
+      />
     </aside>
   )
 }
