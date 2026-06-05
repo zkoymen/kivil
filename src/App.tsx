@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { Check, Minus, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
+import { Check, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
 import './App.css'
 import { SegmentTimeline } from './components/SegmentTimeline'
 import { Sidebar, type SidebarPanel } from './components/Sidebar'
@@ -49,68 +49,6 @@ const getSessionPrompt = (status: string, hasActiveKivil: boolean) => {
   }
 
   return 'Stay with the work.'
-}
-
-function WindowControls() {
-  const [isMaximized, setIsMaximized] = useState(false)
-
-  useEffect(() => {
-    const nativeApp = window.Neutralino
-
-    if (!nativeApp) {
-      return
-    }
-
-    nativeApp.init()
-    void nativeApp.window.setDraggableRegion('window-drag-region', {
-      exclusions: ['window-controls'],
-    })
-    void nativeApp.window.isMaximized().then(setIsMaximized).catch(() => setIsMaximized(false))
-  }, [])
-
-  const minimizeWindow = () => {
-    void window.Neutralino?.window.minimize()
-  }
-
-  const toggleMaximizeWindow = () => {
-    const nativeWindow = window.Neutralino?.window
-
-    if (!nativeWindow) {
-      return
-    }
-
-    const action = isMaximized ? nativeWindow.unmaximize() : nativeWindow.maximize()
-
-    void action
-      .then(() => nativeWindow.isMaximized())
-      .then(setIsMaximized)
-      .catch(() => setIsMaximized((currentValue) => !currentValue))
-  }
-
-  const closeWindow = () => {
-    void window.Neutralino?.app.exit()
-  }
-
-  return (
-    <div className="window-chrome" aria-label="Window controls">
-      <div className="window-drag-region" id="window-drag-region" />
-      <div className="window-controls" id="window-controls">
-        <button aria-label="Minimize window" type="button" onClick={minimizeWindow}>
-          <Minus size={15} strokeWidth={2} />
-        </button>
-        <button
-          aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
-          type="button"
-          onClick={toggleMaximizeWindow}
-        >
-          <Square size={13} strokeWidth={2} />
-        </button>
-        <button aria-label="Close window" type="button" onClick={closeWindow}>
-          <X size={16} strokeWidth={2} />
-        </button>
-      </div>
-    </div>
-  )
 }
 
 function App() {
@@ -526,25 +464,23 @@ function App() {
   }
 
   return (
-    <>
-      <WindowControls />
-      <main
-        className="kivil-app"
-        style={
-          {
-            '--sidebar-width': `${sidebarWidth}px`,
-          } as CSSProperties
-        }
-      >
-        <Sidebar
-          activePanel={activePanel}
-          hasSession={hasSession}
-          onNewSession={hasSession ? resetPrototype : startSession}
-          onResizeStart={startSidebarResize}
-          onTogglePanel={togglePanel}
-        />
+    <main
+      className="kivil-app"
+      style={
+        {
+          '--sidebar-width': `${sidebarWidth}px`,
+        } as CSSProperties
+      }
+    >
+      <Sidebar
+        activePanel={activePanel}
+        hasSession={hasSession}
+        onNewSession={hasSession ? resetPrototype : startSession}
+        onResizeStart={startSidebarResize}
+        onTogglePanel={togglePanel}
+      />
 
-        <section className="main-stage">
+      <section className="main-stage">
         <header className="stage-header">
           <div>
             {hasSession ? (
@@ -701,9 +637,8 @@ function App() {
           </div>
         )}
         {renderPanel()}
-        </section>
-      </main>
-    </>
+      </section>
+    </main>
   )
 }
 
