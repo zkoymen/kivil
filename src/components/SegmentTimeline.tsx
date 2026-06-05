@@ -38,6 +38,9 @@ const getSegmentTooltip = (segment: SessionSegment) => {
   return details.join('\n')
 }
 
+const getSegmentTimeRange = (segment: SessionSegment) =>
+  `${formatTime(segment.startAt)} - ${formatTime(segment.endAt)}`
+
 export function SegmentTimeline({
   compact = false,
   segments,
@@ -70,8 +73,22 @@ export function SegmentTimeline({
             flexGrow: segment.durationMs,
           }}
           tabIndex={0}
-          title={getSegmentTooltip(segment)}
-        />
+        >
+          <span className="segment-tooltip" role="presentation">
+            <span className="tooltip-heading">
+              <span
+                className="tooltip-dot"
+                style={{
+                  background: getSegmentColor(segment, settings),
+                }}
+              />
+              <strong>{getSegmentLabel(segment.kind)}</strong>
+            </span>
+            <span>{formatDuration(segment.durationMs)}</span>
+            <span>{getSegmentTimeRange(segment)}</span>
+            {segment.note ? <em>{segment.note}</em> : null}
+          </span>
+        </div>
       ))}
     </div>
   )
