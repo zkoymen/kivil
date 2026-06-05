@@ -16,17 +16,17 @@
   "modes": {
     "window": {
       "title": "Kıvıl",
-      "width": 1680,
-      "height": 1020,
-      "minWidth": 1280,
-      "minHeight": 860,
+      "width": 1780,
+      "height": 1200,
+      "minWidth": 1180,
+      "minHeight": 760,
       "center": true,
       "fullScreen": false,
       "alwaysOnTop": false,
       "icon": "/dist/appIcon.png",
       "enableInspector": false,
       "borderless": false,
-      "maximize": true,
+      "maximize": false,
       "hidden": false,
       "resizable": true,
       "exitProcessOnClose": true
