@@ -7,9 +7,8 @@
   "documentRoot": "/dist/",
   "url": "/",
   "enableServer": true,
-  "enableNativeAPI": true,
+  "enableNativeAPI": false,
   "tokenSecurity": "none",
-  "nativeAllowList": ["app.exit", "window.*"],
   "logging": {
     "enabled": true,
     "writeToLogFile": false
@@ -17,20 +16,19 @@
   "modes": {
     "window": {
       "title": "Kıvıl",
-      "width": 1320,
-      "height": 860,
-      "minWidth": 1040,
-      "minHeight": 720,
+      "width": 1500,
+      "height": 960,
+      "minWidth": 1180,
+      "minHeight": 780,
       "center": true,
       "fullScreen": false,
       "alwaysOnTop": false,
       "icon": "/dist/appIcon.png",
-      "enableInspector": true,
-      "borderless": true,
+      "enableInspector": false,
+      "borderless": false,
       "maximize": false,
       "hidden": false,
       "resizable": true,
-      "injectClientLibrary": true,
       "exitProcessOnClose": true
     }
   },

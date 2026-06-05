@@ -117,67 +117,6 @@ p {
   font-family: var(--sans);
 }
 
-.kivil-app:has(.desktop-titlebar) {
-  min-height: 100vh;
-  padding-top: 38px;
-}
-
-.desktop-titlebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 38px;
-  padding-left: 18px;
-  color: #d4ecf1;
-  background: #07313b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  user-select: none;
-}
-
-.desktop-titlebar > span {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.desktop-window-controls {
-  display: flex;
-  height: 100%;
-}
-
-.desktop-window-controls button {
-  width: 46px;
-  min-width: 46px;
-  min-height: 38px;
-  padding: 0;
-  color: #d4ecf1;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.desktop-window-controls button:hover:not(:disabled) {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.11);
-  transform: none;
-}
-
-.desktop-window-controls button.is-close:hover:not(:disabled) {
-  background: #b3261e;
-}
-
-.kivil-app:has(.desktop-titlebar) .app-sidebar {
-  min-height: calc(100vh - 38px);
-}
-
 .app-sidebar {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
@@ -491,11 +430,6 @@ p {
   border-left: 1px solid var(--outline);
   box-shadow: -24px 0 60px rgba(15, 23, 42, 0.1);
   animation: panel-in 180ms ease-out;
-}
-
-.kivil-app:has(.desktop-titlebar) .side-panel {
-  top: 38px;
-  height: calc(100vh - 38px);
 }
 
 .side-panel-header {
