@@ -7,8 +7,16 @@
   "documentRoot": "/dist/",
   "url": "/",
   "enableServer": true,
-  "enableNativeAPI": false,
-  "tokenSecurity": "none",
+  "enableNativeAPI": true,
+  "tokenSecurity": "one-time",
+  "nativeAllowList": [
+    "app.exit",
+    "window.minimize",
+    "window.maximize",
+    "window.unmaximize",
+    "window.isMaximized",
+    "window.setDraggableRegion"
+  ],
   "logging": {
     "enabled": true,
     "writeToLogFile": false
@@ -16,19 +24,24 @@
   "modes": {
     "window": {
       "title": "Kıvıl",
-      "width": 1780,
-      "height": 1200,
-      "minWidth": 1180,
-      "minHeight": 760,
-      "center": true,
+      "width": 1060,
+      "height": 720,
+      "minWidth": 920,
+      "minHeight": 680,
+      "x": 120,
+      "y": 80,
+      "center": false,
       "fullScreen": false,
       "alwaysOnTop": false,
       "icon": "/dist/appIcon.png",
       "enableInspector": false,
-      "borderless": false,
+      "borderless": true,
       "maximize": false,
       "hidden": false,
       "resizable": true,
+      "injectGlobals": true,
+      "injectClientLibrary": true,
+      "useSavedState": false,
       "exitProcessOnClose": true
     }
   },
