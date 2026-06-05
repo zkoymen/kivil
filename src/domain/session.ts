@@ -124,8 +124,8 @@ export type SessionSnapshot = {
 
 export const defaultSessionSettings: SessionSettings = {
   kivilDurationMs: 5 * 60 * 1000,
-  workColor: '#f3c84b',
-  kivilColor: '#5bb8a8',
+  workColor: '#0f4c5c',
+  kivilColor: '#d97706',
 }
 
 type RuntimeMode = Exclude<SegmentKind, 'pause'>

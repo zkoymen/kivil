@@ -17,6 +17,8 @@ test-results
 playwright-report
 .vite-dev*.log
 docs/screenshots/kivil-*.png
+design/stitch/
+*.zip
 
 # Editor directories and files
 .vscode/*

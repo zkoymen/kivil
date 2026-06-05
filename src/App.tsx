@@ -1,16 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Check,
-  Pause,
-  Play,
-  RotateCcw,
-  Settings2,
-  Sparkles,
-  Square,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { Check, Pause, Play, RotateCcw, Settings2, Sparkles, Square, X } from 'lucide-react'
 import './App.css'
+import { SegmentTimeline } from './components/SegmentTimeline'
+import { Sidebar } from './components/Sidebar'
 import {
   deriveSessionSnapshot,
   type KivilCancelledEvent,
@@ -23,7 +15,6 @@ import {
   type SessionPausedEvent,
   type SessionResumedEvent,
   type SessionSettings,
-  type SessionSegment,
 } from './domain/session'
 import {
   loadSavedSessions,
@@ -31,6 +22,7 @@ import {
   saveSavedSessions,
   saveSettings,
 } from './domain/storage'
+import { formatDateTime, formatDuration, formatShortDuration } from './utils/time'
 
 type SessionEventInput = SessionEvent extends infer Event
   ? Event extends SessionEvent
@@ -43,112 +35,20 @@ const withId = (event: SessionEventInput): SessionEvent => ({
   id: crypto.randomUUID(),
 }) as SessionEvent
 
-const formatDuration = (durationMs: number) => {
-  const totalSeconds = Math.max(Math.floor(durationMs / 1000), 0)
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  const parts = hours > 0 ? [hours, minutes, seconds] : [minutes, seconds]
-
-  return parts.map((part) => String(part).padStart(2, '0')).join(':')
-}
-
-const formatTime = (timestamp: number | null) => {
-  if (!timestamp) {
-    return '—'
+const getSessionPrompt = (status: string, hasActiveKivil: boolean) => {
+  if (hasActiveKivil) {
+    return 'Consolidate your thoughts.'
   }
 
-  return new Intl.DateTimeFormat('en', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(timestamp)
-}
-
-const formatDateTime = (timestamp: number | null) => {
-  if (!timestamp) {
-    return '—'
+  if (status === 'paused') {
+    return 'Session is paused.'
   }
 
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(timestamp)
-}
-
-const getSegmentLabel = (kind: 'work' | 'kivil' | 'pause') => {
-  if (kind === 'kivil') {
-    return 'Kıvıl'
+  if (status === 'ended') {
+    return 'Session complete.'
   }
 
-  if (kind === 'pause') {
-    return 'Paused'
-  }
-
-  return 'Work'
-}
-
-const getSegmentColor = (segment: SessionSegment, settings: SessionSettings) => {
-  if (segment.kind === 'kivil') {
-    return settings.kivilColor
-  }
-
-  if (segment.kind === 'work') {
-    return settings.workColor
-  }
-
-  return '#c9c0b2'
-}
-
-const getSegmentTooltip = (segment: SessionSegment) => {
-  const details = [
-    `${getSegmentLabel(segment.kind)}: ${formatDuration(segment.durationMs)}`,
-    `${formatTime(segment.startAt)} - ${formatTime(segment.endAt)}`,
-  ]
-
-  if (segment.note) {
-    details.push(segment.note)
-  }
-
-  return details.join('\n')
-}
-
-function SegmentTimeline({
-  compact = false,
-  segments,
-  settings,
-}: {
-  compact?: boolean
-  segments: SessionSegment[]
-  settings: SessionSettings
-}) {
-  const totalDuration = segments.reduce((total, segment) => total + segment.durationMs, 0)
-
-  if (segments.length === 0 || totalDuration === 0) {
-    return <div className={`timeline-empty ${compact ? 'is-compact' : ''}`} />
-  }
-
-  return (
-    <div
-      aria-label="Session timeline"
-      className={`session-timeline ${compact ? 'is-compact' : ''}`}
-      role="list"
-    >
-      {segments.map((segment) => (
-        <div
-          aria-label={getSegmentTooltip(segment)}
-          className={`timeline-segment timeline-${segment.kind}`}
-          key={segment.id}
-          role="listitem"
-          style={{
-            background: getSegmentColor(segment, settings),
-            flexGrow: segment.durationMs,
-          }}
-          tabIndex={0}
-          title={getSegmentTooltip(segment)}
-        />
-      ))}
-    </div>
-  )
+  return 'Your craft deserves undivided attention.'
 }
 
 function App() {
@@ -166,6 +66,7 @@ function App() {
   const canResume = snapshot.status === 'paused'
   const canStartKivil = snapshot.status === 'running' && !snapshot.activeKivil
   const canEnd = snapshot.status === 'running' || snapshot.status === 'paused'
+  const headline = getSessionPrompt(snapshot.status, Boolean(snapshot.activeKivil))
 
   useEffect(() => {
     const timerId = window.setInterval(() => {
@@ -217,10 +118,7 @@ function App() {
   }
 
   const appendEvent = (event: SessionEventInput) => {
-    setEvents((currentEvents) => [
-      ...currentEvents,
-      withId(event),
-    ])
+    setEvents((currentEvents) => [...currentEvents, withId(event)])
   }
 
   const startSession = () => {
@@ -317,12 +215,11 @@ function App() {
       events: nextEvents,
       settings,
     }
-    const nextSavedSessions = [savedSession, ...savedSessions]
 
     setNow(endedAt)
     setOpenedSessionId(savedSession.id)
     setEvents(nextEvents)
-    replaceSavedSessions(nextSavedSessions)
+    replaceSavedSessions([savedSession, ...savedSessions])
   }
 
   const resetPrototype = () => {
@@ -396,232 +293,222 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="app-header">
-        <div>
-          <p className="eyebrow">Kıvıl</p>
-          <h1>{hasSession ? snapshot.name : 'Start a session'}</h1>
-        </div>
-        <span className={`status-pill status-${snapshot.status}`}>
-          {snapshot.status}
-        </span>
-      </header>
+    <main className="kivil-app">
+      <Sidebar
+        hasSession={hasSession}
+        openedSessionId={openedSessionId}
+        savedSessions={savedSessions}
+        onDeleteSession={deleteSavedSession}
+        onNewSession={hasSession ? resetPrototype : startSession}
+        onOpenSession={openSavedSession}
+        onRenameSession={renameSavedSession}
+      />
 
-      {!hasSession ? (
-        <section className="start-surface" aria-label="Start session">
-          <label htmlFor="session-name">Session name</label>
-          <div className="start-row">
+      <section className="main-stage">
+        <div className="window-controls" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+
+        <header className="stage-header">
+          <div>
+            <p className={`state-badge state-${snapshot.status}`}>
+              {snapshot.activeKivil ? 'Reflection period' : snapshot.status}
+            </p>
+            <h1>{headline}</h1>
+          </div>
+          {hasSession ? (
+            <div className="stage-total">
+              <span>Total elapsed</span>
+              <strong>{formatDuration(snapshot.elapsedMs)}</strong>
+            </div>
+          ) : null}
+        </header>
+
+        {!hasSession ? (
+          <section className="start-panel" aria-label="Start session">
+            <p>Define your focus for this segment. Every block of work becomes part of the record.</p>
+            <label htmlFor="session-name">Session name</label>
             <input
               id="session-name"
               value={sessionName}
               onChange={(event) => setSessionName(event.target.value)}
               maxLength={48}
+              placeholder="What are you focusing on?"
             />
             <button className="primary-action" type="button" onClick={startSession}>
-              <Play size={18} />
               Start Session
+              <Play size={20} />
             </button>
-          </div>
-        </section>
-      ) : (
-        <div className="workspace">
-          <section className="timer-surface" aria-label="Current session">
-            <div className="timer-stack">
-              <span>Elapsed</span>
-              <strong>{formatDuration(snapshot.elapsedMs)}</strong>
-            </div>
+          </section>
+        ) : (
+          <div className="session-grid">
+            <section className={`timer-panel ${snapshot.status}`} aria-label="Current session">
+              <p className="segment-label">
+                {snapshot.activeKivil ? 'Kıvıl interval ends in' : `Current segment: ${snapshot.name}`}
+              </p>
+              <strong className="main-timer">
+                {snapshot.activeKivil
+                  ? formatDuration(snapshot.activeKivil.remainingMs)
+                  : formatDuration(snapshot.elapsedMs)}
+              </strong>
 
-            {snapshot.activeKivil ? (
-              <div className="kivil-countdown">
+              <div className="session-actions">
+                {canPause ? (
+                  <button className="icon-action" type="button" onClick={pauseSession}>
+                    <Pause size={22} />
+                    <span>Pause</span>
+                  </button>
+                ) : null}
+                {canResume ? (
+                  <button className="primary-action" type="button" onClick={resumeSession}>
+                    <Play size={20} />
+                    Resume Focus
+                  </button>
+                ) : null}
+                <button className="primary-action" type="button" onClick={startKivil} disabled={!canStartKivil}>
+                  <Sparkles size={18} />
+                  Start Kıvıl
+                </button>
+                <button className="icon-action" type="button" onClick={endSession} disabled={!canEnd}>
+                  <Square size={20} />
+                  <span>End Session</span>
+                </button>
+                {snapshot.status === 'ended' ? (
+                  <button className="icon-action" type="button" onClick={resetPrototype}>
+                    <RotateCcw size={20} />
+                    <span>New Session</span>
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="session-metrics">
+                <div>
+                  <span>Work</span>
+                  <strong>{formatShortDuration(snapshot.workMs)}</strong>
+                </div>
                 <div>
                   <span>Kıvıl</span>
-                  <strong>{formatDuration(snapshot.activeKivil.remainingMs)}</strong>
+                  <strong>{snapshot.kivilCount}</strong>
                 </div>
-                <div className="countdown-bar">
-                  <span
-                    style={{
-                      width: `${Math.min(
-                        (snapshot.activeKivil.elapsedMs / snapshot.activeKivil.durationMs) * 100,
-                        100,
-                      )}%`,
-                      background: settings.kivilColor,
-                    }}
-                  />
+                <div>
+                  <span>Paused</span>
+                  <strong>{formatShortDuration(snapshot.pauseMs)}</strong>
                 </div>
-              </div>
-            ) : null}
-
-            <div className="control-row">
-              {canPause ? (
-                <button type="button" onClick={pauseSession}>
-                  <Pause size={18} />
-                  Pause
-                </button>
-              ) : null}
-              {canResume ? (
-                <button type="button" onClick={resumeSession}>
-                  <Play size={18} />
-                  Resume
-                </button>
-              ) : null}
-              <button type="button" onClick={startKivil} disabled={!canStartKivil}>
-                <Sparkles size={18} />
-                Start Kıvıl
-              </button>
-              <button type="button" onClick={endSession} disabled={!canEnd}>
-                <Square size={18} />
-                End Session
-              </button>
-              {snapshot.status === 'ended' ? (
-                <button type="button" onClick={resetPrototype}>
-                  <RotateCcw size={18} />
-                  New Session
-                </button>
-              ) : null}
-            </div>
-          </section>
-
-          <aside className="settings-surface" aria-label="Session settings">
-            <div className="section-title">
-              <Settings2 size={18} />
-              <h2>Settings</h2>
-            </div>
-            <label htmlFor="kivil-duration">Kıvıl duration</label>
-            <div className="inline-input">
-              <input
-                id="kivil-duration"
-                type="number"
-                min="1"
-                value={settings.kivilDurationMs / 60_000}
-                onChange={(event) => updateDuration(Number(event.target.value))}
-              />
-              <span>min</span>
-            </div>
-            <label htmlFor="work-color">Work color</label>
-            <input
-              id="work-color"
-              className="color-input"
-              type="color"
-              value={settings.workColor}
-              onChange={(event) =>
-                setSettings((currentSettings) => ({
-                  ...currentSettings,
-                  workColor: event.target.value,
-                }))
-              }
-            />
-            <label htmlFor="kivil-color">Kıvıl color</label>
-            <input
-              id="kivil-color"
-              className="color-input"
-              type="color"
-              value={settings.kivilColor}
-              onChange={(event) =>
-                setSettings((currentSettings) => ({
-                  ...currentSettings,
-                  kivilColor: event.target.value,
-                }))
-              }
-            />
-          </aside>
-
-          <aside className="history-surface" aria-label="Saved sessions">
-            <div className="section-title">
-              <h2>Saved Sessions</h2>
-            </div>
-            {savedSessions.length === 0 ? (
-              <p className="muted-text">No saved sessions</p>
-            ) : (
-              <div className="history-list">
-                {savedSessions.map((session) => {
-                  const savedSnapshot = deriveSessionSnapshot(session.events, session.updatedAt)
-
-                  return (
-                    <article
-                      className={`history-row ${openedSessionId === session.id ? 'is-open' : ''}`}
-                      key={session.id}
-                    >
-                      <input
-                        aria-label="Saved session name"
-                        value={session.name}
-                        onChange={(event) => renameSavedSession(session.id, event.target.value)}
-                      />
-                      <span>
-                        {formatDateTime(session.createdAt)} · {formatDuration(savedSnapshot.elapsedMs)}
-                      </span>
-                      <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
-                      <div className="history-actions">
-                        <button type="button" onClick={() => openSavedSession(session)}>
-                          <Play size={16} />
-                          Open
-                        </button>
-                        <button type="button" onClick={() => deleteSavedSession(session.id)}>
-                          <Trash2 size={16} />
-                          Delete
-                        </button>
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-          </aside>
-
-          {snapshot.activeKivil ? (
-            <section className="note-surface" aria-label="Kıvıl note">
-              <label htmlFor="kivil-note">Kıvıl note</label>
-              <textarea
-                id="kivil-note"
-                value={draftNote}
-                onChange={(event) => setDraftNote(event.target.value)}
-                rows={3}
-              />
-              <div className="control-row compact">
-                <button type="button" onClick={saveKivilNote}>
-                  <Check size={16} />
-                  Save Note
-                </button>
-                <button type="button" onClick={completeKivil}>
-                  <Check size={16} />
-                  Complete
-                </button>
-                <button type="button" onClick={cancelKivil}>
-                  <X size={16} />
-                  Cancel
-                </button>
               </div>
             </section>
-          ) : null}
 
-          <section className="summary-surface" aria-label="Session record">
-            <div className="section-title">
-              <h2>{snapshot.status === 'ended' ? 'Session Summary' : 'Session Record'}</h2>
-            </div>
-            <div className="stats-grid">
-              <div>
-                <span>Started</span>
-                <strong>{formatDateTime(snapshot.startedAt)}</strong>
+            <aside className="inspector-panel" aria-label="Session settings">
+              <div className="panel-title">
+                <Settings2 size={18} />
+                <h2>Workspace Preferences</h2>
               </div>
-              <div>
-                <span>Ended</span>
-                <strong>{formatDateTime(snapshot.endedAt)}</strong>
+              <label htmlFor="kivil-duration">Kıvıl duration</label>
+              <div className="inline-input">
+                <input
+                  id="kivil-duration"
+                  type="number"
+                  min="1"
+                  value={settings.kivilDurationMs / 60_000}
+                  onChange={(event) => updateDuration(Number(event.target.value))}
+                />
+                <span>min</span>
               </div>
-              <div>
-                <span>Work</span>
-                <strong>{formatDuration(snapshot.workMs)}</strong>
-              </div>
-              <div>
-                <span>Kıvıl</span>
-                <strong>{snapshot.kivilCount}</strong>
-              </div>
-            </div>
+              <label htmlFor="work-color">Work segment chroma</label>
+              <input
+                id="work-color"
+                className="color-input"
+                type="color"
+                value={settings.workColor}
+                onChange={(event) =>
+                  setSettings((currentSettings) => ({
+                    ...currentSettings,
+                    workColor: event.target.value,
+                  }))
+                }
+              />
+              <label htmlFor="kivil-color">Kıvıl pulse accent</label>
+              <input
+                id="kivil-color"
+                className="color-input"
+                type="color"
+                value={settings.kivilColor}
+                onChange={(event) =>
+                  setSettings((currentSettings) => ({
+                    ...currentSettings,
+                    kivilColor: event.target.value,
+                  }))
+                }
+              />
+            </aside>
 
-            <div className="timeline-shell">
-              <SegmentTimeline segments={snapshot.segments} settings={settings} />
-            </div>
-          </section>
-        </div>
-      )}
+            {snapshot.activeKivil ? (
+              <section className="reflection-panel" aria-label="Kıvıl note">
+                <div>
+                  <p className="segment-label">Record Reflection</p>
+                  <h2>What did this segment change?</h2>
+                </div>
+                <textarea
+                  id="kivil-note"
+                  aria-label="Kıvıl note"
+                  value={draftNote}
+                  onChange={(event) => setDraftNote(event.target.value)}
+                  rows={5}
+                  placeholder="What did you learn? Any friction points? Next steps?"
+                />
+                <div className="session-actions compact">
+                  <button type="button" onClick={saveKivilNote}>
+                    <Check size={16} />
+                    Save Note
+                  </button>
+                  <button className="primary-action amber" type="button" onClick={completeKivil}>
+                    <Check size={16} />
+                    Complete
+                  </button>
+                  <button type="button" onClick={cancelKivil}>
+                    <X size={16} />
+                    Cancel
+                  </button>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="record-panel" aria-label="Session record">
+              <div className="record-header">
+                <div>
+                  <p className="segment-label">{snapshot.status === 'ended' ? 'Session complete' : 'Live record'}</p>
+                  <h2>{snapshot.status === 'ended' ? snapshot.name : 'Chronological record'}</h2>
+                </div>
+                <span>{formatDateTime(snapshot.startedAt)}</span>
+              </div>
+
+              <div className="timeline-shell">
+                <SegmentTimeline segments={snapshot.segments} settings={settings} />
+              </div>
+
+              <div className="stats-grid">
+                <div>
+                  <span>Started</span>
+                  <strong>{formatDateTime(snapshot.startedAt)}</strong>
+                </div>
+                <div>
+                  <span>Ended</span>
+                  <strong>{formatDateTime(snapshot.endedAt)}</strong>
+                </div>
+                <div>
+                  <span>Focused</span>
+                  <strong>{formatDuration(snapshot.elapsedMs)}</strong>
+                </div>
+                <div>
+                  <span>Segments</span>
+                  <strong>{snapshot.segments.length}</strong>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
     </main>
   )
 }
