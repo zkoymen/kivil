@@ -561,8 +561,8 @@ function App() {
             <section className="record-panel" aria-label="Session record">
               <div className="record-header">
                 <div>
-                  <p className="segment-label">{snapshot.status === 'ended' ? 'Session complete' : 'Live record'}</p>
-                  <h2>{snapshot.status === 'ended' ? snapshot.name : 'Chronological record'}</h2>
+                  <p className="segment-label">{snapshot.status === 'ended' ? 'Session complete' : 'Current session'}</p>
+                  <h2>{snapshot.status === 'ended' ? snapshot.name : 'Session Record'}</h2>
                 </div>
                 <span>{formatDateTime(snapshot.startedAt)}</span>
               </div>
