@@ -5,6 +5,7 @@ test('runs the core Kıvıl session flow', async ({ page }) => {
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
 
+  await expect(page.getByText('EMPTY')).toHaveCount(0)
   await page.getByLabel('Session name').fill('Smoke session')
   await page.getByLabel('Start session').getByRole('button', { name: 'Start Session' }).click()
 

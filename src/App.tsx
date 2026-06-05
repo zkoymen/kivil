@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
+import { Check, Maximize2, Minus, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
 import './App.css'
 import { SegmentTimeline } from './components/SegmentTimeline'
 import { Sidebar, type SidebarPanel } from './components/Sidebar'
@@ -35,6 +35,29 @@ const withId = (event: SessionEventInput): SessionEvent => ({
   id: crypto.randomUUID(),
 }) as SessionEvent
 
+let neutralinoInitialized = false
+
+const getNativeShell = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  return window.Neutralino ?? null
+}
+
+const initializeNativeShell = () => {
+  const nativeShell = getNativeShell()
+
+  if (!nativeShell || neutralinoInitialized) {
+    return nativeShell
+  }
+
+  nativeShell.init()
+  neutralinoInitialized = true
+
+  return nativeShell
+}
+
 const getSessionPrompt = (status: string, hasActiveKivil: boolean) => {
   if (hasActiveKivil) {
     return 'Consolidate your thoughts.'
@@ -49,6 +72,72 @@ const getSessionPrompt = (status: string, hasActiveKivil: boolean) => {
   }
 
   return 'Your craft deserves undivided attention.'
+}
+
+function DesktopTitlebar() {
+  const [isDesktopShell] = useState(() => Boolean(getNativeShell()))
+
+  useEffect(() => {
+    if (!isDesktopShell) {
+      return
+    }
+
+    const nativeShell = initializeNativeShell()
+
+    void nativeShell?.window.setDraggableRegion('desktop-titlebar', {
+      exclusions: ['desktop-window-controls'],
+    })
+
+    return () => {
+      void nativeShell?.window.unsetDraggableRegion?.('desktop-titlebar')
+    }
+  }, [isDesktopShell])
+
+  if (!isDesktopShell) {
+    return null
+  }
+
+  const minimizeWindow = () => {
+    void getNativeShell()?.window.minimize()
+  }
+
+  const toggleMaximizeWindow = () => {
+    void (async () => {
+      const nativeShell = getNativeShell()
+
+      if (!nativeShell) {
+        return
+      }
+
+      if (await nativeShell.window.isMaximized()) {
+        await nativeShell.window.unmaximize()
+        return
+      }
+
+      await nativeShell.window.maximize()
+    })()
+  }
+
+  const closeWindow = () => {
+    void getNativeShell()?.app.exit()
+  }
+
+  return (
+    <header className="desktop-titlebar" id="desktop-titlebar">
+      <span>Kıvıl</span>
+      <div className="desktop-window-controls" id="desktop-window-controls">
+        <button type="button" onClick={minimizeWindow} aria-label="Minimize window">
+          <Minus size={15} />
+        </button>
+        <button type="button" onClick={toggleMaximizeWindow} aria-label="Maximize or restore window">
+          <Maximize2 size={14} />
+        </button>
+        <button className="is-close" type="button" onClick={closeWindow} aria-label="Close window">
+          <X size={16} />
+        </button>
+      </div>
+    </header>
+  )
 }
 
 function App() {
@@ -429,6 +518,7 @@ function App() {
 
   return (
     <main className="kivil-app">
+      <DesktopTitlebar />
       <Sidebar
         activePanel={activePanel}
         hasSession={hasSession}
@@ -437,17 +527,13 @@ function App() {
       />
 
       <section className="main-stage">
-        <div className="window-controls" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-
         <header className="stage-header">
           <div>
-            <p className={`state-badge state-${snapshot.status}`}>
-              {snapshot.activeKivil ? 'Reflection period' : snapshot.status}
-            </p>
+            {hasSession ? (
+              <p className={`state-badge state-${snapshot.activeKivil ? 'kivil' : snapshot.status}`}>
+                {snapshot.activeKivil ? 'Reflection period' : snapshot.status}
+              </p>
+            ) : null}
             <h1>{headline}</h1>
           </div>
           {hasSession ? (
