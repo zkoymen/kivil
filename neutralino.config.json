@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
+  "applicationId": "com.zkoymen.kivil",
+  "version": "0.1.0",
+  "defaultMode": "window",
+  "port": 0,
+  "documentRoot": "/dist/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": false,
+  "tokenSecurity": "none",
+  "logging": {
+    "enabled": true,
+    "writeToLogFile": false
+  },
+  "modes": {
+    "window": {
+      "title": "Kıvıl",
+      "width": 1100,
+      "height": 760,
+      "minWidth": 920,
+      "minHeight": 640,
+      "center": true,
+      "fullScreen": false,
+      "alwaysOnTop": false,
+      "icon": "/dist/appIcon.png",
+      "enableInspector": true,
+      "borderless": false,
+      "maximize": false,
+      "hidden": false,
+      "resizable": true,
+      "exitProcessOnClose": true
+    }
+  },
+  "cli": {
+    "binaryName": "kivil",
+    "resourcesPath": "/dist/",
+    "extensionsPath": "/extensions/",
+    "binaryVersion": "6.8.0",
+    "clientVersion": "6.8.0"
+  }
+}

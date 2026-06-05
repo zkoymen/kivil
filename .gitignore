@@ -17,7 +17,9 @@ test-results
 playwright-report
 .vite-dev*.log
 docs/screenshots/kivil-*.png
+.tmp/
 design/stitch/
+neutralino-template/
 *.zip
 
 # Editor directories and files
