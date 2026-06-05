@@ -7,22 +7,29 @@ import {
   Settings2,
   Sparkles,
   Square,
+  Trash2,
   X,
 } from 'lucide-react'
 import './App.css'
 import {
-  defaultSessionSettings,
   deriveSessionSnapshot,
   type KivilCancelledEvent,
   type KivilCompletedEvent,
   type KivilNoteUpdatedEvent,
   type KivilStartedEvent,
+  type SavedSession,
   type SessionEndedEvent,
   type SessionEvent,
   type SessionPausedEvent,
   type SessionResumedEvent,
   type SessionSettings,
 } from './domain/session'
+import {
+  loadSavedSessions,
+  loadSettings,
+  saveSavedSessions,
+  saveSettings,
+} from './domain/storage'
 
 type SessionEventInput = SessionEvent extends infer Event
   ? Event extends SessionEvent
@@ -81,10 +88,12 @@ const getSegmentLabel = (kind: 'work' | 'kivil' | 'pause') => {
 
 function App() {
   const [events, setEvents] = useState<SessionEvent[]>([])
-  const [settings, setSettings] = useState<SessionSettings>(defaultSessionSettings)
+  const [savedSessions, setSavedSessions] = useState<SavedSession[]>(() => loadSavedSessions())
+  const [settings, setSettings] = useState<SessionSettings>(() => loadSettings())
   const [now, setNow] = useState(() => Date.now())
   const [sessionName, setSessionName] = useState('Focus session')
   const [draftNote, setDraftNote] = useState('')
+  const [openedSessionId, setOpenedSessionId] = useState<string | null>(null)
 
   const snapshot = useMemo(() => deriveSessionSnapshot(events, now), [events, now])
   const hasSession = snapshot.status !== 'empty'
@@ -133,6 +142,15 @@ function App() {
     return () => window.clearInterval(timerId)
   }, [])
 
+  useEffect(() => {
+    saveSettings(settings)
+  }, [settings])
+
+  const replaceSavedSessions = (sessions: SavedSession[]) => {
+    setSavedSessions(sessions)
+    saveSavedSessions(sessions)
+  }
+
   const appendEvent = (event: SessionEventInput) => {
     setEvents((currentEvents) => [
       ...currentEvents,
@@ -146,6 +164,7 @@ function App() {
 
     setNow(startedAt)
     setDraftNote('')
+    setOpenedSessionId(null)
     setEvents([
       withId({
         type: 'session_started',
@@ -216,16 +235,92 @@ function App() {
   }
 
   const endSession = () => {
-    appendEvent({
+    const endedAt = Date.now()
+    const nextEvents = [
+      ...events,
+      withId({
       type: 'session_ended',
-      at: Date.now(),
-    } satisfies SessionEventInput & Omit<SessionEndedEvent, 'id'>)
+        at: endedAt,
+      } satisfies SessionEventInput & Omit<SessionEndedEvent, 'id'>),
+    ]
+    const endedSnapshot = deriveSessionSnapshot(nextEvents, endedAt)
+    const savedSession: SavedSession = {
+      id: crypto.randomUUID(),
+      name: endedSnapshot.name,
+      createdAt: endedSnapshot.startedAt ?? endedAt,
+      updatedAt: endedAt,
+      events: nextEvents,
+      settings,
+    }
+    const nextSavedSessions = [savedSession, ...savedSessions]
+
+    setNow(endedAt)
+    setOpenedSessionId(savedSession.id)
+    setEvents(nextEvents)
+    replaceSavedSessions(nextSavedSessions)
   }
 
   const resetPrototype = () => {
     setEvents([])
     setDraftNote('')
+    setOpenedSessionId(null)
     setNow(Date.now())
+  }
+
+  const openSavedSession = (session: SavedSession) => {
+    setEvents(session.events)
+    setSettings(session.settings)
+    setSessionName(session.name)
+    setDraftNote('')
+    setOpenedSessionId(session.id)
+    setNow(Date.now())
+  }
+
+  const renameSavedSession = (sessionId: string, name: string) => {
+    const trimmedName = name.trim() || 'Untitled session'
+    const renamedAt = now
+    const nextSavedSessions = savedSessions.map((session) => {
+      if (session.id !== sessionId) {
+        return session
+      }
+
+      const renamedEvents = [
+        ...session.events,
+        withId({
+          type: 'session_renamed',
+          at: renamedAt,
+          name: trimmedName,
+        }),
+      ]
+
+      return {
+        ...session,
+        name: trimmedName,
+        updatedAt: renamedAt,
+        events: renamedEvents,
+      }
+    })
+
+    replaceSavedSessions(nextSavedSessions)
+
+    if (openedSessionId === sessionId) {
+      const openedSession = nextSavedSessions.find((session) => session.id === sessionId)
+
+      if (openedSession) {
+        setEvents(openedSession.events)
+        setSessionName(openedSession.name)
+      }
+    }
+  }
+
+  const deleteSavedSession = (sessionId: string) => {
+    const nextSavedSessions = savedSessions.filter((session) => session.id !== sessionId)
+
+    replaceSavedSessions(nextSavedSessions)
+
+    if (openedSessionId === sessionId) {
+      resetPrototype()
+    }
   }
 
   const updateDuration = (minutes: number) => {
@@ -363,6 +458,41 @@ function App() {
                 }))
               }
             />
+          </aside>
+
+          <aside className="history-surface" aria-label="Saved sessions">
+            <div className="section-title">
+              <h2>Saved Sessions</h2>
+            </div>
+            {savedSessions.length === 0 ? (
+              <p className="muted-text">No saved sessions</p>
+            ) : (
+              <div className="history-list">
+                {savedSessions.map((session) => (
+                  <article
+                    className={`history-row ${openedSessionId === session.id ? 'is-open' : ''}`}
+                    key={session.id}
+                  >
+                    <input
+                      aria-label="Saved session name"
+                      value={session.name}
+                      onChange={(event) => renameSavedSession(session.id, event.target.value)}
+                    />
+                    <span>{formatDateTime(session.createdAt)}</span>
+                    <div className="history-actions">
+                      <button type="button" onClick={() => openSavedSession(session)}>
+                        <Play size={16} />
+                        Open
+                      </button>
+                      <button type="button" onClick={() => deleteSavedSession(session.id)}>
+                        <Trash2 size={16} />
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </aside>
 
           {snapshot.activeKivil ? (

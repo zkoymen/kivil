@@ -141,6 +141,7 @@ textarea {
 .start-surface,
 .timer-surface,
 .settings-surface,
+.history-surface,
 .note-surface,
 .summary-surface {
   background: rgba(255, 253, 250, 0.88);
@@ -174,15 +175,21 @@ textarea {
 }
 
 .settings-surface,
+.history-surface,
 .note-surface,
 .summary-surface {
   padding: 20px;
 }
 
-.settings-surface {
+.settings-surface,
+.history-surface {
   display: grid;
   align-content: start;
   gap: 12px;
+}
+
+.history-surface {
+  grid-column: 2;
 }
 
 .note-surface,
@@ -342,6 +349,48 @@ textarea {
   color: #34302b;
 }
 
+.muted-text {
+  color: #70675b;
+}
+
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: #fbf8f1;
+  border: 1px solid #e3dacb;
+  border-radius: 8px;
+}
+
+.history-row.is-open {
+  border-color: rgba(91, 184, 168, 0.7);
+}
+
+.history-row input {
+  height: 38px;
+}
+
+.history-row span {
+  color: #70675b;
+  font-size: 13px;
+}
+
+.history-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.history-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+}
+
 @media (max-width: 820px) {
   .app-shell {
     padding: 18px;
@@ -358,6 +407,10 @@ textarea {
 
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .history-surface {
+    grid-column: auto;
   }
 
   .stats-grid {
