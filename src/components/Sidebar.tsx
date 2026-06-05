@@ -1,25 +1,18 @@
-import { BarChart3, Clock3, History, Play, Settings2, Trash2 } from 'lucide-react'
+import { BarChart3, Clock3, History, Play, Settings2 } from 'lucide-react'
 import brandLogo from '../../assets/brand/kivil_logo_transparent.png'
-import { deriveSessionSnapshot, type SavedSession } from '../domain/session'
-import { formatDateTime, formatShortDuration } from '../utils/time'
-import { SegmentTimeline } from './SegmentTimeline'
+
+export type SidebarPanel = 'history' | 'summaries' | 'settings' | null
 
 export function Sidebar({
+  activePanel,
   hasSession,
-  openedSessionId,
-  onDeleteSession,
   onNewSession,
-  onOpenSession,
-  onRenameSession,
-  savedSessions,
+  onTogglePanel,
 }: {
+  activePanel: SidebarPanel
   hasSession: boolean
-  openedSessionId: string | null
-  onDeleteSession: (sessionId: string) => void
   onNewSession: () => void
-  onOpenSession: (session: SavedSession) => void
-  onRenameSession: (sessionId: string, name: string) => void
-  savedSessions: SavedSession[]
+  onTogglePanel: (panel: Exclude<SidebarPanel, null>) => void
 }) {
   return (
     <aside className="app-sidebar" aria-label="Kıvıl navigation">
@@ -33,62 +26,31 @@ export function Sidebar({
           <Clock3 size={22} />
           Session
         </button>
-        <button type="button">
+        <button
+          className={activePanel === 'history' ? 'is-panel-active' : ''}
+          type="button"
+          onClick={() => onTogglePanel('history')}
+        >
           <History size={22} />
           History
         </button>
-        <button type="button">
+        <button
+          className={activePanel === 'summaries' ? 'is-panel-active' : ''}
+          type="button"
+          onClick={() => onTogglePanel('summaries')}
+        >
           <BarChart3 size={22} />
           Summaries
         </button>
-        <button type="button">
+        <button
+          className={activePanel === 'settings' ? 'is-panel-active' : ''}
+          type="button"
+          onClick={() => onTogglePanel('settings')}
+        >
           <Settings2 size={22} />
           Settings
         </button>
       </nav>
-
-      <section className="sidebar-history" aria-label="Saved sessions">
-        <div className="sidebar-section-title">
-          <h2>Saved Sessions</h2>
-          <span>{savedSessions.length}</span>
-        </div>
-        {savedSessions.length === 0 ? (
-          <p className="muted-text">No saved sessions yet.</p>
-        ) : (
-          <div className="history-list">
-            {savedSessions.map((session) => {
-              const savedSnapshot = deriveSessionSnapshot(session.events, session.updatedAt)
-
-              return (
-                <article
-                  className={`history-row ${openedSessionId === session.id ? 'is-open' : ''}`}
-                  key={session.id}
-                >
-                  <input
-                    aria-label="Saved session name"
-                    value={session.name}
-                    onChange={(event) => onRenameSession(session.id, event.target.value)}
-                  />
-                  <span>
-                    {formatDateTime(session.createdAt)} · {formatShortDuration(savedSnapshot.elapsedMs)}
-                  </span>
-                  <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
-                  <div className="history-actions">
-                    <button type="button" onClick={() => onOpenSession(session)}>
-                      <Play size={15} />
-                      Open
-                    </button>
-                    <button type="button" onClick={() => onDeleteSession(session.id)}>
-                      <Trash2 size={15} />
-                      Delete
-                    </button>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        )}
-      </section>
 
       <button className="sidebar-start" type="button" onClick={onNewSession}>
         <Play size={18} />

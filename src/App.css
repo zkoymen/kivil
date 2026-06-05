@@ -108,7 +108,7 @@ p {
 
 .app-sidebar {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 28px;
   min-height: 100vh;
   padding: 24px 18px;
@@ -160,21 +160,10 @@ p {
   background: #0f4c5c;
 }
 
-.sidebar-history {
-  min-height: 0;
-  overflow: auto;
-}
-
-.sidebar-section-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.sidebar-section-title h2 {
-  font-size: 14px;
+.sidebar-nav button.is-panel-active {
+  color: var(--work-dark);
+  background: var(--surface-strong);
+  border-color: var(--outline);
 }
 
 .muted-text {
@@ -182,48 +171,8 @@ p {
   font-size: 14px;
 }
 
-.history-list {
-  display: grid;
-  gap: 10px;
-}
-
-.history-row {
-  display: grid;
-  gap: 8px;
-  padding: 12px;
-  background: var(--surface-container);
-  border: 1px solid var(--outline);
-  border-radius: 8px;
-}
-
-.history-row.is-open {
-  border-color: var(--work);
-}
-
-.history-row input {
-  height: 36px;
-  padding: 0 10px;
-  background: var(--surface);
-}
-
-.history-row span {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.history-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.history-actions button {
-  min-height: 32px;
-  padding: 0 8px;
-  font-size: 13px;
-}
-
 .sidebar-start {
+  align-self: end;
   width: 100%;
   min-height: 54px;
   color: #ffffff;
@@ -382,7 +331,7 @@ p {
 
 .session-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 28px;
   align-items: start;
 }
@@ -460,18 +409,11 @@ p {
   font-weight: 500;
 }
 
-.inspector-panel,
 .reflection-panel,
 .record-panel {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--outline);
   border-radius: 8px;
-}
-
-.inspector-panel {
-  display: grid;
-  gap: 14px;
-  padding: 22px;
 }
 
 .panel-title {
@@ -501,6 +443,103 @@ p {
 .color-input {
   height: 46px;
   padding: 5px;
+}
+
+.side-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  width: min(380px, calc(100vw - 268px));
+  height: 100vh;
+  padding: 32px 24px;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.96);
+  border-left: 1px solid var(--outline);
+  box-shadow: -24px 0 60px rgba(15, 23, 42, 0.1);
+}
+
+.side-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.side-panel-header h2 {
+  margin-top: 6px;
+  font-size: 24px;
+}
+
+.panel-close {
+  min-width: 40px;
+  width: 40px;
+  padding: 0;
+}
+
+.panel-list,
+.panel-form {
+  display: grid;
+  gap: 12px;
+}
+
+.panel-session,
+.summary-row {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+}
+
+.panel-session.is-open {
+  border-color: var(--work);
+}
+
+.panel-session input {
+  height: 38px;
+  padding: 0 10px;
+}
+
+.panel-session span,
+.summary-row span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.history-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.history-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.summary-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.summary-row .session-timeline,
+.summary-row .timeline-empty {
+  grid-column: 1 / -1;
+}
+
+.summary-row h3 {
+  font-size: 16px;
+}
+
+.summary-row > strong {
+  color: var(--work);
+  font-family: var(--mono);
 }
 
 .reflection-panel {

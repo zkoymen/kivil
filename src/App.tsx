@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Pause, Play, RotateCcw, Settings2, Sparkles, Square, X } from 'lucide-react'
+import { Check, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
 import './App.css'
 import { SegmentTimeline } from './components/SegmentTimeline'
-import { Sidebar } from './components/Sidebar'
+import { Sidebar, type SidebarPanel } from './components/Sidebar'
 import {
   deriveSessionSnapshot,
   type KivilCancelledEvent,
@@ -59,6 +59,7 @@ function App() {
   const [sessionName, setSessionName] = useState('Focus session')
   const [draftNote, setDraftNote] = useState('')
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null)
+  const [activePanel, setActivePanel] = useState<SidebarPanel>(null)
 
   const snapshot = useMemo(() => deriveSessionSnapshot(events, now), [events, now])
   const hasSession = snapshot.status !== 'empty'
@@ -292,16 +293,147 @@ function App() {
     }))
   }
 
+  const togglePanel = (panel: Exclude<SidebarPanel, null>) => {
+    setActivePanel((currentPanel) => (currentPanel === panel ? null : panel))
+  }
+
+  const closePanel = () => setActivePanel(null)
+
+  const renderPanel = () => {
+    if (!activePanel) {
+      return null
+    }
+
+    return (
+      <aside className="side-panel" aria-label={`${activePanel} panel`}>
+        <div className="side-panel-header">
+          <div>
+            <p className="segment-label">{activePanel}</p>
+            <h2>
+              {activePanel === 'history'
+                ? 'Saved Sessions'
+                : activePanel === 'summaries'
+                  ? 'Session Summaries'
+                  : 'Workspace Preferences'}
+            </h2>
+          </div>
+          <button className="panel-close" type="button" onClick={closePanel} aria-label="Close panel">
+            <X size={18} />
+          </button>
+        </div>
+
+        {activePanel === 'history' ? (
+          savedSessions.length === 0 ? (
+            <p className="muted-text">No saved sessions yet.</p>
+          ) : (
+            <div className="panel-list">
+              {savedSessions.map((session) => {
+                const savedSnapshot = deriveSessionSnapshot(session.events, session.updatedAt)
+
+                return (
+                  <article
+                    className={`panel-session ${openedSessionId === session.id ? 'is-open' : ''}`}
+                    key={session.id}
+                  >
+                    <input
+                      aria-label="Saved session name"
+                      value={session.name}
+                      onChange={(event) => renameSavedSession(session.id, event.target.value)}
+                    />
+                    <span>{formatDateTime(session.createdAt)}</span>
+                    <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
+                    <div className="history-actions">
+                      <button type="button" onClick={() => openSavedSession(session)}>
+                        <Play size={15} />
+                        Open
+                      </button>
+                      <button type="button" onClick={() => deleteSavedSession(session.id)}>
+                        <Trash2 size={15} />
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )
+        ) : null}
+
+        {activePanel === 'summaries' ? (
+          savedSessions.length === 0 ? (
+            <p className="muted-text">End a session to create the first summary.</p>
+          ) : (
+            <div className="panel-list">
+              {savedSessions.map((session) => {
+                const savedSnapshot = deriveSessionSnapshot(session.events, session.updatedAt)
+
+                return (
+                  <article className="summary-row" key={session.id}>
+                    <div>
+                      <h3>{session.name}</h3>
+                      <span>{formatDateTime(session.createdAt)}</span>
+                    </div>
+                    <strong>{formatShortDuration(savedSnapshot.elapsedMs)}</strong>
+                    <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
+                  </article>
+                )
+              })}
+            </div>
+          )
+        ) : null}
+
+        {activePanel === 'settings' ? (
+          <div className="panel-form">
+            <label htmlFor="kivil-duration">Kıvıl duration</label>
+            <div className="inline-input">
+              <input
+                id="kivil-duration"
+                type="number"
+                min="1"
+                value={settings.kivilDurationMs / 60_000}
+                onChange={(event) => updateDuration(Number(event.target.value))}
+              />
+              <span>min</span>
+            </div>
+            <label htmlFor="work-color">Work segment chroma</label>
+            <input
+              id="work-color"
+              className="color-input"
+              type="color"
+              value={settings.workColor}
+              onChange={(event) =>
+                setSettings((currentSettings) => ({
+                  ...currentSettings,
+                  workColor: event.target.value,
+                }))
+              }
+            />
+            <label htmlFor="kivil-color">Kıvıl pulse accent</label>
+            <input
+              id="kivil-color"
+              className="color-input"
+              type="color"
+              value={settings.kivilColor}
+              onChange={(event) =>
+                setSettings((currentSettings) => ({
+                  ...currentSettings,
+                  kivilColor: event.target.value,
+                }))
+              }
+            />
+          </div>
+        ) : null}
+      </aside>
+    )
+  }
+
   return (
     <main className="kivil-app">
       <Sidebar
+        activePanel={activePanel}
         hasSession={hasSession}
-        openedSessionId={openedSessionId}
-        savedSessions={savedSessions}
-        onDeleteSession={deleteSavedSession}
         onNewSession={hasSession ? resetPrototype : startSession}
-        onOpenSession={openSavedSession}
-        onRenameSession={renameSavedSession}
+        onTogglePanel={togglePanel}
       />
 
       <section className="main-stage">
@@ -399,50 +531,6 @@ function App() {
               </div>
             </section>
 
-            <aside className="inspector-panel" aria-label="Session settings">
-              <div className="panel-title">
-                <Settings2 size={18} />
-                <h2>Workspace Preferences</h2>
-              </div>
-              <label htmlFor="kivil-duration">Kıvıl duration</label>
-              <div className="inline-input">
-                <input
-                  id="kivil-duration"
-                  type="number"
-                  min="1"
-                  value={settings.kivilDurationMs / 60_000}
-                  onChange={(event) => updateDuration(Number(event.target.value))}
-                />
-                <span>min</span>
-              </div>
-              <label htmlFor="work-color">Work segment chroma</label>
-              <input
-                id="work-color"
-                className="color-input"
-                type="color"
-                value={settings.workColor}
-                onChange={(event) =>
-                  setSettings((currentSettings) => ({
-                    ...currentSettings,
-                    workColor: event.target.value,
-                  }))
-                }
-              />
-              <label htmlFor="kivil-color">Kıvıl pulse accent</label>
-              <input
-                id="kivil-color"
-                className="color-input"
-                type="color"
-                value={settings.kivilColor}
-                onChange={(event) =>
-                  setSettings((currentSettings) => ({
-                    ...currentSettings,
-                    kivilColor: event.target.value,
-                  }))
-                }
-              />
-            </aside>
-
             {snapshot.activeKivil ? (
               <section className="reflection-panel" aria-label="Kıvıl note">
                 <div>
@@ -508,6 +596,7 @@ function App() {
             </section>
           </div>
         )}
+        {renderPanel()}
       </section>
     </main>
   )
