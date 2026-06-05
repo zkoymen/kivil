@@ -1,4 +1,4 @@
-guide.md
+docs/guide.md
 
 # Logs
 logs
@@ -16,7 +16,7 @@ dist-ssr
 test-results
 playwright-report
 .vite-dev*.log
-kivil-*.png
+docs/screenshots/kivil-*.png
 
 # Editor directories and files
 .vscode/*

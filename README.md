@@ -1,73 +1,47 @@
-# React + TypeScript + Vite
+# Kıvıl
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Kıvıl is a local-first desktop focus app prototype for open-ended work sessions and reflection intervals.
 
-Currently, two official plugins are available:
+The current implementation is a React, TypeScript, and Vite prototype. The session engine is event-log based so timers, summaries, and saved sessions are derived from chronological events instead of manually mutated counters.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Current Prototype
 
-## React Compiler
+- Upward-counting session timer.
+- Pause and resume.
+- Manual Kıvıl reflection intervals.
+- Small countdown timer during active Kıvıl intervals.
+- Local session saving through `localStorage`.
+- Saved session list with rename and delete.
+- Work and Kıvıl color settings.
+- Horizontal chronological timelines for summaries and history.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Commands
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
+npm test
+npm run lint
+npm run build
+npm run test:smoke
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `src/domain`: Event-log session engine and local persistence helpers.
+- `src`: React prototype UI.
+- `tests`: Playwright smoke tests.
+- `docs`: Project concept, design brief, implementation plan, and prototype scope.
+- `docs/screenshots`: Local verification screenshots.
+- `assets/brand`: Brand/logo source files.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+`docs/guide.md` is intentionally ignored because it is local working guidance for future Codex sessions.
+
+## Desktop Shell
+
+The next technical step is adding a Tauri 2 desktop shell after the Windows prerequisites are installed:
+
+- Microsoft C++ Build Tools with the Desktop development with C++ workload.
+- Rust through `rustup`.
+- Microsoft Edge WebView2 Runtime if it is not already present.
+
