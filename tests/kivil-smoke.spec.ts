@@ -32,3 +32,36 @@ test('runs the core Kıvıl session flow', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete' }).click()
   await expect(page.getByRole('heading', { name: 'Stay with the work.' })).toBeVisible()
 })
+
+test('restores an unfinished session after reload', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.localStorage.clear())
+  await page.reload()
+
+  await page.getByLabel('Session name').fill('Persistent session')
+  await page.getByLabel('Start session').getByRole('button', { name: 'Start Session' }).click()
+  await expect(page.getByRole('button', { name: 'End Session' })).toBeVisible()
+
+  await page.reload()
+
+  await expect(page.getByRole('heading', { name: 'Session is paused.' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Resume Focus' })).toBeVisible()
+  await expect(page.getByText('Current segment: Persistent session')).toBeVisible()
+})
+
+test('switches between normal and compact mode', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.localStorage.clear())
+  await page.reload()
+
+  await page.getByLabel('Session name').fill('Compact session')
+  await page.getByLabel('Start session').getByRole('button', { name: 'Start Session' }).click()
+  await page.getByRole('button', { name: 'Compact' }).click()
+
+  await expect(page.getByLabel('Compact session')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Return to normal mode' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Return to normal mode' }).click()
+  await expect(page.getByRole('button', { name: 'Compact' })).toBeVisible()
+  await expect(page.getByText('Current segment: Compact session')).toBeVisible()
+})

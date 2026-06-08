@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { Check, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
+import { Check, Maximize2, Pause, Play, RotateCcw, Sparkles, Square, Trash2, X } from 'lucide-react'
 import './App.css'
 import { SegmentTimeline } from './components/SegmentTimeline'
 import { Sidebar, type SidebarPanel } from './components/Sidebar'
@@ -17,11 +17,20 @@ import {
   type SessionSettings,
 } from './domain/session'
 import {
+  clearActiveSessionDraft,
   loadSavedSessions,
   loadSettings,
+  loadActiveSessionDraft,
+  saveActiveSessionDraft,
   saveSavedSessions,
   saveSettings,
+  type ActiveSessionDraft,
 } from './domain/storage'
+import {
+  enterCompactWindowMode,
+  exitCompactWindowMode,
+  type WindowRestoreState,
+} from './utils/desktopWindow'
 import { formatDateTime, formatDuration, formatShortDuration } from './utils/time'
 
 type SessionEventInput = SessionEvent extends infer Event
@@ -51,16 +60,69 @@ const getSessionPrompt = (status: string, hasActiveKivil: boolean) => {
   return 'Stay with the work.'
 }
 
+const restoreActiveSessionDraft = (): ActiveSessionDraft | null => {
+  const draft = loadActiveSessionDraft()
+
+  if (!draft?.events.length) {
+    return null
+  }
+
+  const restoredSnapshot = deriveSessionSnapshot(draft.events, draft.updatedAt)
+
+  if (restoredSnapshot.status === 'empty' || restoredSnapshot.status === 'ended') {
+    return null
+  }
+
+  if (restoredSnapshot.status !== 'running') {
+    return draft
+  }
+
+  return {
+    ...draft,
+    events: [
+      ...draft.events,
+      withId({
+        type: 'session_paused',
+        at: Math.max(draft.updatedAt, draft.events.at(-1)?.at ?? draft.updatedAt),
+      } satisfies SessionEventInput & Omit<SessionPausedEvent, 'id'>),
+    ],
+  }
+}
+
+const ensureNotificationPermission = () => {
+  if (!('Notification' in window) || Notification.permission !== 'default') {
+    return
+  }
+
+  void Notification.requestPermission()
+}
+
+const notifyKivilCompleted = () => {
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
+    return
+  }
+
+  new Notification('Kıvıl interval complete', {
+    body: 'Return to the work session.',
+  })
+}
+
+const getNotedKivilSegments = (segments: ReturnType<typeof deriveSessionSnapshot>['segments']) =>
+  segments.filter((segment) => segment.kind === 'kivil' && segment.note?.trim())
+
 function App() {
-  const [events, setEvents] = useState<SessionEvent[]>([])
+  const [restoredDraft] = useState(() => restoreActiveSessionDraft())
+  const [events, setEvents] = useState<SessionEvent[]>(() => restoredDraft?.events ?? [])
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>(() => loadSavedSessions())
-  const [settings, setSettings] = useState<SessionSettings>(() => loadSettings())
+  const [settings, setSettings] = useState<SessionSettings>(() => restoredDraft?.settings ?? loadSettings())
   const [now, setNow] = useState(() => Date.now())
-  const [sessionName, setSessionName] = useState('Focus session')
-  const [draftNote, setDraftNote] = useState('')
-  const [openedSessionId, setOpenedSessionId] = useState<string | null>(null)
+  const [sessionName, setSessionName] = useState(restoredDraft?.sessionName ?? 'Focus session')
+  const [draftNote, setDraftNote] = useState(restoredDraft?.draftNote ?? '')
+  const [openedSessionId, setOpenedSessionId] = useState<string | null>(restoredDraft?.openedSessionId ?? null)
   const [activePanel, setActivePanel] = useState<SidebarPanel>(null)
   const [sidebarWidth, setSidebarWidth] = useState(228)
+  const [isCompactMode, setIsCompactMode] = useState(false)
+  const [windowRestoreState, setWindowRestoreState] = useState<WindowRestoreState>(null)
 
   const snapshot = useMemo(() => deriveSessionSnapshot(events, now), [events, now])
   const hasSession = snapshot.status !== 'empty'
@@ -96,6 +158,8 @@ function App() {
           return currentEvents
         }
 
+        notifyKivilCompleted()
+
         return [
           ...currentEvents,
           withId({
@@ -113,6 +177,25 @@ function App() {
   useEffect(() => {
     saveSettings(settings)
   }, [settings])
+
+  useEffect(() => {
+    const savedAt = Date.now()
+    const currentSnapshot = deriveSessionSnapshot(events, savedAt)
+
+    if (currentSnapshot.status === 'empty' || currentSnapshot.status === 'ended') {
+      clearActiveSessionDraft()
+      return
+    }
+
+    saveActiveSessionDraft({
+      events,
+      settings,
+      sessionName,
+      openedSessionId,
+      draftNote,
+      updatedAt: savedAt,
+    })
+  }, [draftNote, events, openedSessionId, sessionName, settings])
 
   const replaceSavedSessions = (sessions: SavedSession[]) => {
     setSavedSessions(sessions)
@@ -155,6 +238,7 @@ function App() {
 
   const startKivil = () => {
     setDraftNote('')
+    ensureNotificationPermission()
     appendEvent({
       type: 'kivil_started',
       at: Date.now(),
@@ -172,6 +256,7 @@ function App() {
       at: Date.now(),
       kivilEventId: snapshot.activeKivil.eventId,
     } satisfies SessionEventInput & Omit<KivilCompletedEvent, 'id'>)
+    notifyKivilCompleted()
   }
 
   const cancelKivil = () => {
@@ -321,6 +406,75 @@ function App() {
     window.addEventListener('pointerup', stopResize)
   }
 
+  const enterCompactMode = async () => {
+    setActivePanel(null)
+    setIsCompactMode(true)
+    const restoreState = await enterCompactWindowMode()
+    setWindowRestoreState(restoreState)
+  }
+
+  const exitCompactMode = async () => {
+    setIsCompactMode(false)
+    await exitCompactWindowMode(windowRestoreState)
+    setWindowRestoreState(null)
+  }
+
+  const renderCompactMode = () => (
+    <main className="kivil-app is-compact-mode">
+      <section className={`compact-shell ${snapshot.status}`} aria-label="Compact session">
+        <header className="compact-header" aria-label="Compact controls">
+          <button type="button" onClick={exitCompactMode} aria-label="Return to normal mode" title="Normal mode">
+            <Maximize2 size={18} />
+          </button>
+        </header>
+
+        {!hasSession ? (
+          <div className="compact-empty">
+            <strong className="compact-timer">00:00</strong>
+            <button type="button" onClick={startSession} aria-label="Start Session" title="Start Session">
+              <Play size={17} />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="compact-body">
+              <strong className="compact-timer">
+                {snapshot.activeKivil
+                  ? formatDuration(snapshot.activeKivil.remainingMs)
+                  : formatDuration(snapshot.elapsedMs)}
+              </strong>
+            </div>
+
+            <div className="compact-actions">
+              {canPause ? (
+                <button type="button" onClick={pauseSession} aria-label="Pause" title="Pause">
+                  <Pause size={17} />
+                </button>
+              ) : null}
+              {canResume ? (
+                <button type="button" onClick={resumeSession} aria-label="Resume Focus" title="Resume Focus">
+                  <Play size={17} />
+                </button>
+              ) : null}
+              {snapshot.activeKivil ? (
+                <button type="button" onClick={completeKivil} aria-label="Complete Kıvıl" title="Complete Kıvıl">
+                  <Check size={17} />
+                </button>
+              ) : (
+                <button type="button" onClick={startKivil} disabled={!canStartKivil} aria-label="Start Kıvıl" title="Start Kıvıl">
+                  <Sparkles size={17} />
+                </button>
+              )}
+              <button type="button" onClick={endSession} disabled={!canEnd} aria-label="End Session" title="End Session">
+                <Square size={17} />
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+    </main>
+  )
+
   const renderPanel = () => {
     if (!activePanel) {
       return null
@@ -351,6 +505,7 @@ function App() {
             <div className="panel-list">
               {savedSessions.map((session) => {
                 const savedSnapshot = deriveSessionSnapshot(session.events, session.updatedAt)
+                const notedSegments = getNotedKivilSegments(savedSnapshot.segments)
 
                 return (
                   <article
@@ -378,6 +533,13 @@ function App() {
                       </span>
                     </div>
                     <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
+                    {notedSegments.length > 0 ? (
+                      <div className="note-list history-notes" aria-label="Saved Kıvıl notes">
+                        {notedSegments.map((segment) => (
+                          <p key={segment.id}>{segment.note}</p>
+                        ))}
+                      </div>
+                    ) : null}
                     <div className="history-actions">
                       <button type="button" onClick={() => openSavedSession(session)}>
                         <Play size={15} />
@@ -410,7 +572,12 @@ function App() {
                       <span>{formatDateTime(session.createdAt)}</span>
                     </div>
                     <strong>{formatShortDuration(savedSnapshot.elapsedMs)}</strong>
-                    <SegmentTimeline compact segments={savedSnapshot.segments} settings={session.settings} />
+                    <SegmentTimeline
+                      compact
+                      segments={savedSnapshot.segments}
+                      settings={session.settings}
+                      showNotes={false}
+                    />
                   </article>
                 )
               })}
@@ -463,6 +630,10 @@ function App() {
     )
   }
 
+  if (isCompactMode) {
+    return renderCompactMode()
+  }
+
   return (
     <main
       className="kivil-app"
@@ -475,6 +646,7 @@ function App() {
       <Sidebar
         activePanel={activePanel}
         hasSession={hasSession}
+        onEnterCompactMode={enterCompactMode}
         onNewSession={hasSession ? resetPrototype : startSession}
         onResizeStart={startSidebarResize}
         onTogglePanel={togglePanel}
@@ -614,6 +786,22 @@ function App() {
               <div className="timeline-shell">
                 <SegmentTimeline segments={snapshot.segments} settings={settings} />
               </div>
+
+              {getNotedKivilSegments(snapshot.segments).length > 0 ? (
+                <div className="record-notes" aria-label="Kıvıl notes">
+                  <p className="segment-label">Kıvıl notes</p>
+                  <div className="note-list">
+                    {getNotedKivilSegments(snapshot.segments).map((segment) => (
+                      <article key={segment.id}>
+                        <span>
+                          {formatDateTime(segment.startAt)} · {formatShortDuration(segment.durationMs)}
+                        </span>
+                        <p>{segment.note}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="stats-grid">
                 <div>

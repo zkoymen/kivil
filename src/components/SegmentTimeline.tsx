@@ -25,14 +25,14 @@ const getSegmentColor = (segment: SessionSegment, settings: SessionSettings) => 
   return '#c0c8cb'
 }
 
-const getSegmentTooltip = (segment: SessionSegment) => {
+const getSegmentTooltip = (segment: SessionSegment, showNotes: boolean) => {
   const details = [
     `${getSegmentLabel(segment.kind)}: ${formatDuration(segment.durationMs)}`,
     `${formatTime(segment.startAt)} - ${formatTime(segment.endAt)}`,
   ]
 
-  if (segment.note) {
-    details.push(segment.note)
+  if (showNotes && segment.note) {
+    details.push(getNotePreview(segment.note))
   }
 
   return details.join('\n')
@@ -41,14 +41,26 @@ const getSegmentTooltip = (segment: SessionSegment) => {
 const getSegmentTimeRange = (segment: SessionSegment) =>
   `${formatTime(segment.startAt)} - ${formatTime(segment.endAt)}`
 
+const getNotePreview = (note: string) => {
+  const normalizedNote = note.trim()
+
+  if (normalizedNote.length <= 220) {
+    return normalizedNote
+  }
+
+  return `${normalizedNote.slice(0, 220).trimEnd()}...`
+}
+
 export function SegmentTimeline({
   compact = false,
   segments,
   settings,
+  showNotes = true,
 }: {
   compact?: boolean
   segments: SessionSegment[]
   settings: SessionSettings
+  showNotes?: boolean
 }) {
   const totalDuration = segments.reduce((total, segment) => total + segment.durationMs, 0)
 
@@ -64,7 +76,7 @@ export function SegmentTimeline({
     >
       {segments.map((segment) => (
         <div
-          aria-label={getSegmentTooltip(segment)}
+          aria-label={getSegmentTooltip(segment, showNotes)}
           className={`timeline-segment timeline-${segment.kind}`}
           key={segment.id}
           role="listitem"
@@ -86,7 +98,7 @@ export function SegmentTimeline({
             </span>
             <span>{formatDuration(segment.durationMs)}</span>
             <span>{getSegmentTimeRange(segment)}</span>
-            {segment.note ? <em>{segment.note}</em> : null}
+            {showNotes && segment.note ? <em>{getNotePreview(segment.note)}</em> : null}
           </span>
         </div>
       ))}

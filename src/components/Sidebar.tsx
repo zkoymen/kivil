@@ -1,4 +1,4 @@
-import { BarChart3, Clock3, History, Play, Settings2 } from 'lucide-react'
+import { BarChart3, Clock3, History, Minimize2, Play, Settings2 } from 'lucide-react'
 import type { PointerEventHandler } from 'react'
 import brandLogo from '../../assets/brand/kivil_logo_transparent.png'
 
@@ -7,12 +7,14 @@ export type SidebarPanel = 'history' | 'summaries' | 'settings' | null
 export function Sidebar({
   activePanel,
   hasSession,
+  onEnterCompactMode,
   onNewSession,
   onResizeStart,
   onTogglePanel,
 }: {
   activePanel: SidebarPanel
   hasSession: boolean
+  onEnterCompactMode: () => void
   onNewSession: () => void
   onResizeStart: PointerEventHandler<HTMLButtonElement>
   onTogglePanel: (panel: Exclude<SidebarPanel, null>) => void
@@ -52,6 +54,10 @@ export function Sidebar({
         >
           <Settings2 size={22} />
           Settings
+        </button>
+        <button type="button" onClick={onEnterCompactMode}>
+          <Minimize2 size={22} />
+          Compact
         </button>
       </nav>
 
