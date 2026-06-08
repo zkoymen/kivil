@@ -117,6 +117,99 @@ p {
   font-family: var(--sans);
 }
 
+.kivil-app.is-compact-mode {
+  display: block;
+  min-width: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--surface-container);
+}
+
+.compact-shell {
+  display: grid;
+  grid-template-rows: 34px minmax(72px, 1fr) 38px;
+  gap: 6px;
+  height: 100vh;
+  min-height: 0;
+  padding: 8px 18px 12px;
+  overflow: hidden;
+  background: var(--surface-container);
+  border-top: 4px solid var(--work);
+}
+
+.compact-shell.paused,
+.compact-shell.ended {
+  border-top-color: var(--outline-strong);
+}
+
+.compact-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 0;
+}
+
+.compact-header button,
+.compact-actions button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 6px;
+}
+
+.compact-body {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.compact-timer {
+  color: var(--text);
+  font-family: var(--mono);
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 54px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.compact-shell.paused .compact-timer {
+  color: rgba(25, 28, 30, 0.42);
+}
+
+.compact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 0;
+}
+
+.compact-empty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  min-height: 0;
+}
+
+.compact-empty button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+
 .app-sidebar {
   position: relative;
   display: grid;
@@ -542,6 +635,51 @@ p {
   font-size: 14px;
 }
 
+.note-list {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.note-list article,
+.note-list p {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.note-list article {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 6px;
+}
+
+.note-list article span {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.history-notes {
+  max-height: 116px;
+  padding: 10px;
+  background: var(--surface-container);
+  border: 1px solid rgba(64, 72, 75, 0.14);
+  border-radius: 6px;
+}
+
+.history-notes p {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .history-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -619,6 +757,11 @@ p {
   border-radius: 8px;
 }
 
+.record-notes {
+  display: grid;
+  gap: 10px;
+}
+
 .session-timeline,
 .timeline-empty {
   display: flex;
@@ -679,6 +822,7 @@ p {
   gap: 5px;
   min-width: 168px;
   max-width: 260px;
+  overflow: hidden;
   padding: 10px 12px;
   color: #ffffff;
   font-size: 12px;
@@ -772,11 +916,15 @@ p {
 }
 
 .segment-tooltip em {
+  display: -webkit-box;
   max-width: 100%;
   margin-top: 2px;
   overflow-wrap: anywhere;
+  overflow: hidden;
   color: rgba(255, 255, 255, 0.82);
   font-style: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
 }
 
 @keyframes panel-in {

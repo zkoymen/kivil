@@ -4,12 +4,21 @@
   "version": "0.1.0",
   "applicationIcon": "public/appIcon.png",
   "defaultMode": "window",
-  "port": 0,
+  "port": 44735,
   "documentRoot": "/dist/",
   "url": "/",
   "enableServer": true,
-  "enableNativeAPI": false,
+  "enableNativeAPI": true,
   "tokenSecurity": "none",
+  "nativeAllowList": [
+    "window.getSize",
+    "window.getPosition",
+    "window.setAlwaysOnTop",
+    "window.setSize",
+    "window.move",
+    "window.center",
+    "window.focus"
+  ],
   "logging": {
     "enabled": true,
     "writeToLogFile": false
