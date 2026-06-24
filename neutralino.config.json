@@ -9,7 +9,7 @@
   "url": "/",
   "enableServer": true,
   "enableNativeAPI": true,
-  "tokenSecurity": "none",
+  "tokenSecurity": "one-time",
   "nativeAllowList": [
     "window.getSize",
     "window.getPosition",

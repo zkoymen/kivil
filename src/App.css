@@ -126,12 +126,13 @@ p {
 }
 
 .compact-shell {
+  position: relative;
   display: grid;
-  grid-template-rows: 34px minmax(72px, 1fr) 38px;
-  gap: 6px;
+  grid-template-rows: minmax(0, 1fr) 34px;
+  gap: 8px;
   height: 100vh;
   min-height: 0;
-  padding: 8px 18px 12px;
+  padding: 28px 16px 12px;
   overflow: hidden;
   background: var(--surface-container);
   border-top: 4px solid var(--work);
@@ -143,18 +144,22 @@ p {
 }
 
 .compact-header {
+  position: absolute;
+  top: 12px;
+  right: 14px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   min-height: 0;
+  z-index: 2;
 }
 
 .compact-header button,
 .compact-actions button {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
   padding: 0;
   border-radius: 6px;
 }
@@ -166,6 +171,7 @@ p {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  padding-top: 8px;
 }
 
 .compact-timer {
@@ -173,7 +179,7 @@ p {
   font-family: var(--mono);
   max-width: 100%;
   overflow: hidden;
-  font-size: 54px;
+  font-size: 48px;
   font-weight: 500;
   line-height: 1;
   letter-spacing: 0;
@@ -190,7 +196,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -203,10 +209,10 @@ p {
 }
 
 .compact-empty button {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
   padding: 0;
 }
 

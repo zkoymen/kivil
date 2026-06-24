@@ -1,3 +1,4 @@
+# Local project notes and AI work logs stay private by default.
 /docs/
 
 # Logs
@@ -16,8 +17,8 @@ dist-ssr
 test-results
 playwright-report
 .vite-dev*.log
-docs/screenshots/kivil-*.png
 .tmp/
+/assets/screenshots/kivil-history.png
 design/stitch/
 neutralino-template/
 *.zip
