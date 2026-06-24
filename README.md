@@ -6,17 +6,44 @@ It is not a Pomodoro timer. A Kıvıl session starts like a stopwatch and keeps 
 
 ## Screenshots
 
-![Kıvıl active session](assets/screenshots/kivil-session.png)
-
-![Kıvıl reflection note in progress](assets/screenshots/kivil-real-reflection-note.png)
-
-![Kıvıl completed session with custom colors](assets/screenshots/kivil-real-summary-colors.png)
-
-![Kıvıl reflection interval](assets/screenshots/kivil-reflection.png)
-
-![Kıvıl workspace preferences](assets/screenshots/kivil-settings.png)
-
-![Kıvıl summary notes](assets/screenshots/kivil-summary-notes.png)
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshots/kivil-session.png" alt="Kıvıl active session" />
+    </td>
+    <td width="50%">
+      <img src="assets/screenshots/kivil-real-reflection-note.png" alt="Kıvıl reflection note in progress" />
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Active session</strong></td>
+    <td><strong>Reflection note</strong></td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshots/kivil-real-summary-colors.png" alt="Kıvıl completed session with custom colors" />
+    </td>
+    <td width="50%">
+      <img src="assets/screenshots/kivil-reflection.png" alt="Kıvıl reflection interval" />
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Session summary</strong></td>
+    <td><strong>Kıvıl interval</strong></td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshots/kivil-settings.png" alt="Kıvıl workspace preferences" />
+    </td>
+    <td width="50%">
+      <img src="assets/screenshots/kivil-summary-notes.png" alt="Kıvıl summary notes" />
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Preferences</strong></td>
+    <td><strong>Summary notes</strong></td>
+  </tr>
+</table>
 
 ## Why This Exists
 
