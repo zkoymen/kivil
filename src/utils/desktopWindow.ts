@@ -1,8 +1,8 @@
 import { window as neutralinoWindow } from '@neutralinojs/lib'
 
 const compactSize = {
-  width: 410,
-  height: 260,
+  width: 420,
+  height: 300,
 }
 
 const normalMinimumSize = {
